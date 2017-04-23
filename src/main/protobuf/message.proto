@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+import "scalapb/scalapb.proto";
+
+option (scalapb.options) = {
+    package_name: "registerd.entity.protobuf"
+    flat_package: true
+};
+
+message Block {
+    string prev_hash = 1;
+    repeated Payload payloads = 2;
+    string payloads_hash = 3;
+    string nonce = 4;
+}
+
+message Payload {
+}

@@ -1,0 +1,22 @@
+machine:
+  java:
+    version: oraclejdk8
+dependencies:
+  pre:
+    - cd /tmp && wget https://github.com/jgm/pandoc/releases/download/1.16.0.2/pandoc-1.16.0.2-1-amd64.deb && sudo dpkg -i pandoc-1.16.0.2-1-amd64.deb
+    - pandoc -v
+    - wget -O ~/bin/sbt-launch.jar https://repo.typesafe.com/typesafe/ivy-releases/org.scala-sbt/sbt-launch/0.13.11/sbt-launch.jar
+    - echo -e '#!/bin/bash\nSBT_OPTS="-Xms512M -Xmx1536M -Xss1M -XX:+CMSClassUnloadingEnabled"\njava $SBT_OPTS -jar `dirname $0`/sbt-launch.jar "$@"' > ~/bin/sbt && chmod u+x ~/bin/sbt
+  override:
+    - mkdir -p ~/.bintray && envsubst < .credentials > ~/.bintray/.credentials
+    - sbt clean "test:compile"
+  cache_directories:
+    - "~/.sbt"
+test:
+  override:
+    - sbt test
+deployment:
+  staging:
+    branch: master
+    commands:
+      - sbt "set version := \"0.0.1-b${CIRCLE_BUILD_NUM}-${CIRCLE_SHA1}\"" package assembly
