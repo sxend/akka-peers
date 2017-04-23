@@ -23,6 +23,7 @@ libraryDependencies ++= {
   val akkaHttpVersion = "10.0.5"
   Seq(
     "org.apache.commons" % "commons-crypto" % "1.0.0",
+    "commons-codec" % "commons-codec" % "1.10",
     "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion,
     "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
     "org.apache.logging.log4j" % "log4j-api" % log4jVersion,

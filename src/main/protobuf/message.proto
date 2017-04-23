@@ -3,16 +3,20 @@ syntax = "proto3";
 import "scalapb/scalapb.proto";
 
 option (scalapb.options) = {
-    package_name: "registerd.entity.protobuf"
+    package_name: "registerd.entity"
     flat_package: true
 };
 
 message Block {
-    string prev_hash = 1;
+    string prev_block = 1;
     repeated Payload payloads = 2;
-    string payloads_hash = 3;
-    string nonce = 4;
+    string payloads_digest = 3;
+    int64 timestamp = 4;
+    int32 nonce = 5;
 }
 
 message Payload {
+    string instance = 1;
+    string instance_uri = 2;
+    bytes resource = 3;
 }
