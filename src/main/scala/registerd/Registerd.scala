@@ -45,6 +45,8 @@ object Registerd {
           complete("endpoint available")
         }
       }
-    Http().bindAndHandle(route, "localhost", 8080)
+    val hostname = config.getString("registerd.endpoint.hostname")
+    val port = config.getInt("registerd.endpoint.port")
+    Http().bindAndHandle(route, hostname, port)
   }
 }

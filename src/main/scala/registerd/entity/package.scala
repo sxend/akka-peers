@@ -20,7 +20,7 @@ package object entity {
     }
   }
 
-  private def hash(bytes: Array[Byte]): String = DigestUtils.sha256Hex(bytes)
-  private def hash(bytes: String): String = DigestUtils.sha256Hex(bytes)
+  private def hash(data: Array[Byte]): String = DigestUtils.sha256Hex(data)
+  private def hash(data: String): String = DigestUtils.sha256Hex(data)
 
 }
