@@ -8,15 +8,17 @@ option (scalapb.options) = {
 };
 
 message Block {
-    string prev_block = 1;
-    repeated Payload payloads = 2;
-    string payloads_digest = 3;
-    int64 timestamp = 4;
-    int32 nonce = 5;
+    int32 version = 1;
+    bytes prev_block = 2;
+    repeated Payload payloads = 3;
+    bytes payloads_merkle_root = 4;
+    int64 timestamp = 5;
+    int32 nonce = 6;
 }
 
 message Payload {
     string instance = 1;
     string instance_uri = 2;
     bytes resource = 3;
+    bytes script = 4;
 }
