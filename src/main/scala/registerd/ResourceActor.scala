@@ -21,7 +21,7 @@ class ResourceActor extends Actor with ActorLogging {
 
 object ResourceActor {
   val typeName: String = "resource"
-  val messageExtractor: MessageExtractor = new HashCodeMessageExtractor(100) {
+  val messageExtractor: MessageExtractor = new HashCodeMessageExtractor(Int.MaxValue) {
     override def entityId(message: Any): String = message match {
       case message: Array[Byte] => DigestUtils.sha256Hex(message)
       case payload: Payload     => DigestUtils.sha256Hex(payload.resource.toByteArray)

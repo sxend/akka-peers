@@ -1,11 +1,10 @@
 package registerd.entity
 
+import akka.http.scaladsl.marshallers.sprayjson.SprayJsonSupport
 import com.google.protobuf.ByteString
 import spray.json._
-import spray.json.DefaultJsonProtocol._
-import spray.json.{ JsValue, RootJsonFormat }
 
-trait JsonProtocol {
+trait JsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val byteStringFormat = new RootJsonFormat[ByteString] {
     override def read(json: JsValue): ByteString = json match {
       case JsArray(arr) => ByteString.copyFrom(arr.map(_.convertTo[Byte]).toArray)

@@ -9,6 +9,7 @@ import akka.http.scaladsl._
 import akka.http.scaladsl.server.Directives._
 import com.typesafe.config.{ Config, ConfigFactory }
 import org.apache.commons.crypto.utils.Utils
+import registerd.entity.{ Block, Payload }
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
@@ -41,12 +42,13 @@ object Registerd {
     import system.dispatcher
     implicit val materializer = ActorMaterializer()
     import registerd.entity.JsonProtocol._
+    implicit val printer = spray.json.PrettyPrinter
     val route =
       path("resources") {
         put {
-          complete("endpoint available")
-        } ~ get {
           complete("")
+        } ~ get {
+          complete(Block.defaultInstance.copy(payloads = List(Payload.defaultInstance)))
         }
       }
     val hostname = config.getString("registerd.endpoint.hostname")

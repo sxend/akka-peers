@@ -9,9 +9,9 @@ option (scalapb.options) = {
 
 message Block {
     int32 version = 1;
-    bytes prev_block = 2;
+    string prev_block = 2;
     repeated Payload payloads = 3;
-    bytes payloads_merkle_root = 4;
+    string payloads_merkle_root = 4;
     int64 timestamp = 5;
     int32 nonce = 6;
 }
