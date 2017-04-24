@@ -8,6 +8,7 @@ import akka.cluster.http.management.ClusterHttpManagement
 import akka.http.scaladsl._
 import akka.http.scaladsl.server.Directives._
 import com.typesafe.config.{ Config, ConfigFactory }
+import org.apache.commons.crypto.utils.Utils
 
 import scala.collection.JavaConversions._
 import scala.concurrent.duration._
@@ -24,11 +25,11 @@ object Registerd {
     implicit val system = ActorSystem("registerd", config)
     val cluster = Cluster(system)
     onRole("seed") {
-      CounterActor.startProxy(system)
+      ResourceActor.startProxy(system)
       ClusterHttpManagement(cluster).start()
     }
     onRole("member") {
-      CounterActor.startSharding(system)
+      ResourceActor.startSharding(system)
       startServer()
     }
   }
@@ -39,10 +40,13 @@ object Registerd {
   private def startServer()(implicit system: ActorSystem): Unit = {
     import system.dispatcher
     implicit val materializer = ActorMaterializer()
+    import registerd.entity.JsonProtocol._
     val route =
-      path("blocks" / Segment) { (id) =>
-        get {
+      path("resources") {
+        put {
           complete("endpoint available")
+        } ~ get {
+          complete("")
         }
       }
     val hostname = config.getString("registerd.endpoint.hostname")

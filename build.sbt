@@ -22,6 +22,8 @@ libraryDependencies ++= {
   val log4jVersion = "2.7"
   val akkaHttpVersion = "10.0.5"
   Seq(
+    "org.iq80.leveldb" % "leveldb" % "0.7",
+    "org.fusesource.leveldbjni" % "leveldbjni-all" % "1.8",
     "org.apache.commons" % "commons-crypto" % "1.0.0",
     "commons-codec" % "commons-codec" % "1.10",
     "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion,
