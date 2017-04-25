@@ -1,13 +1,8 @@
 package registerd
 
-import com.google.protobuf.ByteString
 import org.apache.commons.codec.digest.DigestUtils
 
 package object entity {
-  (0 until Int.MaxValue).par.foreach { i =>
-    val digest = org.apache.commons.codec.digest.DigestUtils.sha256Hex(s"$i")
-    if (digest.take(6).forall(_ == '0')) println(s"$digest, input: $i")
-  }
 
   implicit class BlockOps(block: Block) {
     lazy val digest: String = hash(block.toByteArray)
