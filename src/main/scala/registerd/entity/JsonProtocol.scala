@@ -14,7 +14,7 @@ trait JsonProtocol extends SprayJsonSupport with DefaultJsonProtocol {
       JsArray(obj.toByteArray.map(_.toJson): _*)
     }
   }
-  implicit val payloadFormat = jsonFormat4(Payload.apply)
+  implicit val payloadFormat = jsonFormat4(Resource.apply)
   implicit val blockFormat = jsonFormat6(Block.apply)
 }
 

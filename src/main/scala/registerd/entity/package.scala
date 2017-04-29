@@ -8,11 +8,11 @@ package object entity {
     lazy val digest: String = hash(block.toByteArray)
     def updateNonce(nonce: Int): Block = this.block.copy(nonce = nonce)
   }
-  implicit class PayloadOps(payload: Payload) {
-    lazy val digest: String = hash(payload.toByteArray)
+  implicit class ResourceOps(resource: Resource) {
+    lazy val digest: String = hash(resource.toByteArray)
   }
-  implicit class PayloadsOps(payloads: Seq[Payload]) {
-    lazy val digest: String = flatten(payloads.map(_.digest): _*)
+  implicit class ResourcesOps(resources: Seq[Resource]) {
+    lazy val digest: String = flatten(resources.map(_.digest): _*)
 
     private def flatten(digests: String*): String = digests match {
       case a :: Nil       => hash(a + a)

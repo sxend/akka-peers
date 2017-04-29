@@ -5,9 +5,9 @@ import akka.cluster.Cluster
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.server.Directives._
 import akka.cluster.http.management.ClusterHttpManagement
+import akka.http.scaladsl.model.StatusCodes
 import akka.stream.ActorMaterializer
 import com.typesafe.config.{ Config, ConfigFactory }
-import registerd.entity.{ Block, Payload }
 
 import scala.collection.JavaConversions._
 
@@ -35,20 +35,18 @@ object Registerd {
     implicit val system = cluster.system
     import system.dispatcher
     implicit val materializer = ActorMaterializer()
+    val instance = system.actorOf(Props(classOf[Registerd], cluster), config.getString("registerd.hostname"))
     import registerd.entity.JsonProtocol._
     implicit val printer = spray.json.PrettyPrinter
     val route =
       path("resources") {
         put {
-          complete("")
-        } ~ get {
-          complete(Block.defaultInstance.copy(payloads = List(Payload.defaultInstance)))
+          complete(StatusCodes.Accepted)
         }
       }
     val hostname = system.settings.config.getString("registerd.endpoint.hostname")
     val port = system.settings.config.getInt("registerd.endpoint.port")
     Http().bindAndHandle(route, hostname, port)
-    system.actorOf(Props(classOf[Registerd], cluster), config.getString("registerd.hostname"))
   }
 }
 

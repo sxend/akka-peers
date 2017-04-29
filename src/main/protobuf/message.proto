@@ -10,15 +10,15 @@ option (scalapb.options) = {
 message Block {
     int32 version = 1;
     string prev_block = 2;
-    repeated Payload payloads = 3;
+    repeated Resource resources = 3;
     string payloads_merkle_root = 4;
     int64 timestamp = 5;
     int32 nonce = 6;
 }
 
-message Payload {
+message Resource {
     string instance = 1;
     string instance_uri = 2;
-    bytes resource = 3;
-    bytes script = 4;
+    bytes payload = 3;
+    string script = 4;
 }
