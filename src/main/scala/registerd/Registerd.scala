@@ -4,7 +4,7 @@ import akka.actor.{ Actor, ActorLogging, ActorSystem, Props }
 import akka.pattern._
 import akka.cluster.Cluster
 import akka.http.scaladsl.Http
-import akka.http.scaladsl.server.Directives
+import akka.http.scaladsl.server.{ Directives, Route }
 import akka.http.scaladsl.server.Directives._
 import akka.cluster.http.management.ClusterHttpManagement
 import akka.http.scaladsl.model.StatusCodes
@@ -61,28 +61,21 @@ object Registerd {
           }
         } ~
           get {
+            def resourceComplete: PartialFunction[Try[Option[Resource]], Route] = {
+              case Success(Some(resource)) =>
+                complete(resource)
+              case Success(None) =>
+                complete(StatusCodes.NotFound)
+              case Failure(t) =>
+                system.log.error(t, t.getMessage)
+                complete(StatusCodes.NotFound)
+            }
             path(Segment) { id =>
-              onComplete(ref.ask(id).mapTo[Option[Resource]]) {
-                case Success(Some(resource)) =>
-                  complete(resource)
-                case Success(None) =>
-                  complete(StatusCodes.NotFound)
-                case Failure(t) =>
-                  system.log.error(t, t.getMessage)
-                  complete(StatusCodes.NotFound)
+              onComplete(ref.ask(id).mapTo[Option[Resource]])(resourceComplete)
+            } ~
+              path(Segment / Segment) { (instance, id) =>
+                onComplete(ref.ask((instance, id)).mapTo[Option[Resource]])(resourceComplete)
               }
-            }
-            path(Segment / Segment) { (instance, id) =>
-              onComplete(ref.ask((instance, id)).mapTo[Option[Resource]]) {
-                case Success(Some(resource)) =>
-                  complete(resource)
-                case Success(None) =>
-                  complete(StatusCodes.NotFound)
-                case Failure(t) =>
-                  system.log.error(t, t.getMessage)
-                  complete(StatusCodes.NotFound)
-              }
-            }
           }
       }
     val hostname = system.settings.config.getString("registerd.endpoint.hostname")
@@ -113,8 +106,8 @@ class Registerd(cluster: Cluster) extends Actor with ActorLogging {
   }
   private def getResource(instance: String, id: String): Future[Option[Resource]] = {
     Future {
-      val checksum = scala.io.Source.fromFile(s"$resourcesDir/$instance/$id/checksum.txt").getLines.toList.head
-      val resource = Resource.parseFrom(Files.readAllBytes(Paths.get(s"$resourcesDir/$instance/$id/resource.bin")))
+      val checksum = scala.io.Source.fromFile(getFilePath(s"$resourcesDir/$instance/$id", "checksum.txt")).getLines.toList.head
+      val resource = Resource.parseFrom(Files.readAllBytes(Paths.get(getFilePath(s"$resourcesDir/$instance/$id", "resource.bin"))))
       if (checksum == resource.digest) {
         Some(resource)
       } else {
@@ -125,10 +118,25 @@ class Registerd(cluster: Cluster) extends Actor with ActorLogging {
   private def saveResource(resource: Resource): Unit = {
     val checksum = resource.digest
     val binary = resource.toByteArray
-    val file = new PrintWriter(s"$resourcesDir/${resource.instance}/${resource.id}/checksum.txt")
+    val file = new PrintWriter(getFilePath(s"$resourcesDir/${resource.instance}/${resource.id}", "checksum.txt"))
     file.write(checksum)
     file.close()
-    Files.write(Paths.get(s"$resourcesDir/${resource.instance}/${resource.id}/resource.bin"), binary)
+    Files.write(Paths.get(getFilePath(s"$resourcesDir/${resource.instance}/${resource.id}", "resource.bin")), binary)
+  }
+  private def getFilePath(dir: String, name: String): String = {
+    mkdirp(dir)
+    s"$dir/$name"
+  }
+  private def mkdirp(path: String) {
+    var prepath = ""
+
+    for (dir <- path.split("/")) {
+      prepath += (dir + "/")
+      val file = new java.io.File(prepath)
+      if (!file.exists()) {
+        file.mkdir()
+      }
+    }
   }
   override def unhandled(message: Any): Unit = log.warning(s"unhandled message: $message")
 }
