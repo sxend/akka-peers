@@ -15,8 +15,9 @@ import com.typesafe.config.{ Config, ConfigFactory }
 import registerd.entity.Resource
 
 import scala.collection.JavaConversions._
+import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.{ Failure, Success }
+import scala.util.{ Failure, Success, Try }
 
 object Registerd {
 
@@ -53,7 +54,7 @@ object Registerd {
           Directives.entity(as[Protocol.Value]) { request =>
             ref ! Resource(
               instance = config.getString("registerd.hostname"),
-              instanceUri = config.getString("registerd.hostname") + s"/${request.id}",
+              id = request.id,
               payload = ByteString.copyFrom(request.payload.getBytes)
             )
             complete(StatusCodes.Accepted)
@@ -62,6 +63,17 @@ object Registerd {
           get {
             path(Segment) { id =>
               onComplete(ref.ask(id).mapTo[Option[Resource]]) {
+                case Success(Some(resource)) =>
+                  complete(resource)
+                case Success(None) =>
+                  complete(StatusCodes.NotFound)
+                case Failure(t) =>
+                  system.log.error(t, t.getMessage)
+                  complete(StatusCodes.NotFound)
+              }
+            }
+            path(Segment / Segment) { (instance, id) =>
+              onComplete(ref.ask((instance, id)).mapTo[Option[Resource]]) {
                 case Success(Some(resource)) =>
                   complete(resource)
                 case Success(None) =>
@@ -83,9 +95,40 @@ object Registerd {
 }
 
 class Registerd(cluster: Cluster) extends Actor with ActorLogging {
+  import java.io.PrintWriter
+  import java.nio.file.{ Files, Paths }
+  import context.dispatcher
+  private implicit val system = context.system
+  private val settings = system.settings
+  private val config = settings.config
+  private val hostname = config.getString("registerd.hostname")
+  private val resourcesDir = config.getString("registerd.resources-dir")
   def receive = {
-    case message => log.info(s"message received: $message")
+    case id: String =>
+      getResource(hostname, id).pipeTo(sender())
+    case (instance: String, id: String) =>
+      getResource(instance, id).pipeTo(sender())
+    case resource: Resource => saveResource(resource)
+    case message            => log.info(s"message received: $message")
   }
-
+  private def getResource(instance: String, id: String): Future[Option[Resource]] = {
+    Future {
+      val checksum = scala.io.Source.fromFile(s"$resourcesDir/$instance/$id/checksum.txt").getLines.toList.head
+      val resource = Resource.parseFrom(Files.readAllBytes(Paths.get(s"$resourcesDir/$instance/$id/resource.bin")))
+      if (checksum == resource.digest) {
+        Some(resource)
+      } else {
+        None
+      }
+    }
+  }
+  private def saveResource(resource: Resource): Unit = {
+    val checksum = resource.digest
+    val binary = resource.toByteArray
+    val file = new PrintWriter(s"$resourcesDir/${resource.instance}/${resource.id}/checksum.txt")
+    file.write(checksum)
+    file.close()
+    Files.write(Paths.get(s"$resourcesDir/${resource.instance}/${resource.id}/resource.bin"), binary)
+  }
   override def unhandled(message: Any): Unit = log.warning(s"unhandled message: $message")
 }

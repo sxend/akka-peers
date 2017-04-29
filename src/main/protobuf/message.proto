@@ -18,7 +18,7 @@ message Block {
 
 message Resource {
     string instance = 1;
-    string instance_uri = 2;
+    string id = 2;
     bytes payload = 3;
     string script = 4;
 }
