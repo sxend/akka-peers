@@ -50,7 +50,6 @@ class Registerd(cluster: Cluster) extends Actor with ActorLogging {
     case (instance: String, id: String) =>
       getResource(instance, id).pipeTo(sender())
     case resource: Resource => saveResource(resource)
-    case message            => log.info(s"message received: $message")
   }
 
   private def getResource(instance: String, id: String): Future[Option[Resource]] = {
