@@ -4,6 +4,9 @@ import akka.actor.{ Actor, ActorLogging, ActorSystem, Props }
 import akka.pattern._
 import akka.cluster.Cluster
 import akka.cluster.http.management.ClusterHttpManagement
+import akka.cluster.pubsub.DistributedPubSub
+import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
+import akka.serialization.Serializer
 import com.typesafe.config.{ Config, ConfigFactory }
 import registerd.entity.Resource
 
@@ -39,16 +42,18 @@ class Registerd(cluster: Cluster) extends Actor with ActorLogging {
 
   import context.dispatcher
   private implicit val system = context.system
+  private val mediator = DistributedPubSub(system).mediator
   private val settings = system.settings
   private val config = settings.config
   private val hostname = config.getString("registerd.hostname")
   private val resourcesDir = config.getString("registerd.resources-dir")
 
+  mediator ! Subscribe("resource", self)
+
   def receive = {
-    case id: String =>
-      getResource(hostname, id).pipeTo(sender())
     case (instance: String, id: String) =>
-      getResource(instance, id).pipeTo(sender())
+      if (instance == hostname)
+        getResource(instance, id).pipeTo(sender())
     case resource: Resource => saveResource(resource)
   }
 
@@ -56,9 +61,11 @@ class Registerd(cluster: Cluster) extends Actor with ActorLogging {
     Future {
       val checksum = FileSystem.readString(s"$resourcesDir/$instance/$id/checksum.txt")
       val resource = Resource.parseFrom(FileSystem.readBinary(s"$resourcesDir/$instance/$id/resource.bin"))
-      if (checksum == resource.digest) {
+      val resourceDigest = resource.digest
+      if (checksum == resourceDigest) {
         Some(resource)
       } else {
+        log.warning(s"$resourcesDir/$instance/$id checksum mismatch: $checksum != $resourceDigest")
         None
       }
     }
