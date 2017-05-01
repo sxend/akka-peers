@@ -6,11 +6,10 @@ import akka.cluster.Cluster
 import akka.cluster.http.management.ClusterHttpManagement
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
-import akka.serialization.Serializer
 import com.typesafe.config.{ Config, ConfigFactory }
 import registerd.entity.Resource
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.concurrent.Future
 import scala.concurrent.duration._
 
@@ -18,7 +17,7 @@ object Registerd {
 
   val config: Config = ConfigFactory.load
   private val hostname = config.getString("registerd.hostname")
-  private val roles = config.getStringList("akka.cluster.roles").toList
+  private val roles: List[String] = config.getStringList("akka.cluster.roles").asScala.toList
 
   def main(args: Array[String]): Unit = {
     val cluster = Cluster(ActorSystem("registerd", config))

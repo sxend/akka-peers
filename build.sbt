@@ -5,7 +5,7 @@ name := "registerd"
 
 version := "0.0.1-SNAPSHOT"
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.12.2"
 
 resolvers ++= Seq(
   Resolver.sonatypeRepo("releases"),
@@ -18,7 +18,7 @@ resolvers ++= Seq(
 
 libraryDependencies ++= {
   val akkaVersion = "2.5.0"
-  val spec2Version = "3.8.4"
+  val spec2Version = "3.8.9"
   val log4jVersion = "2.7"
   val akkaHttpVersion = "10.0.5"
   Seq(
@@ -27,6 +27,7 @@ libraryDependencies ++= {
     "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion,
     "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
     "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
+    "com.github.romix.akka" %% "akka-kryo-serialization" % "0.5.2",
     "com.lightbend.akka" %% "akka-management-cluster-http" % "0.2",
     "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
