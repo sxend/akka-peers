@@ -13,7 +13,7 @@ import akka.stream.ActorMaterializer
 import akka.util.Timeout
 import com.google.protobuf.ByteString
 import registerd.RegisterdEndpoint.Protocol
-import registerd.entity.Resource
+import registerd.entity._
 import registerd.entity.JsonProtocol._
 
 import scala.util.{ Failure, Success, Try }
@@ -34,8 +34,8 @@ case class RegisterdEndpoint(registerdRef: ActorRef, cluster: Cluster) {
       put {
         Directives.entity(as[Protocol.Value]) { request =>
           mediator ! Publish("resource", Resource(
-            instance = config.getString("registerd.hostname"),
-            id = request.id,
+            instance = config.getString("registerd.hostname").asByteString,
+            id = request.id.asByteString,
             payload = ByteString.copyFrom(request.payload.getBytes)
           ))
           complete(StatusCodes.Accepted)

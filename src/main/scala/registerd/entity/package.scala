@@ -1,5 +1,6 @@
 package registerd
 
+import com.google.protobuf.ByteString
 import org.apache.commons.codec.digest.DigestUtils
 
 package object entity {
@@ -19,6 +20,12 @@ package object entity {
       case a :: b :: Nil  => hash(a + b)
       case a :: b :: tail => hash(flatten(a, b) + flatten(tail: _*))
     }
+  }
+  implicit class StringToByteString(str: String) {
+    def asByteString: ByteString = ByteString.copyFrom(str.getBytes("UTF-8"))
+  }
+  implicit class ByteStringToString(bs: ByteString) {
+    def asString: String = new String(bs.toByteArray, "UTF-8")
   }
 
   private def hash(data: Array[Byte]): String = DigestUtils.sha256Hex(data)
