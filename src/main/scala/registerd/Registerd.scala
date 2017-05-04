@@ -5,7 +5,7 @@ import akka.pattern._
 import akka.cluster.Cluster
 import akka.cluster.http.management.ClusterHttpManagement
 import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
+import akka.cluster.pubsub.DistributedPubSubMediator.{ Subscribe, SubscribeAck }
 import com.typesafe.config.{ Config, ConfigFactory }
 import registerd.entity.Resource
 
@@ -75,5 +75,8 @@ class Registerd(cluster: Cluster) extends Actor with ActorLogging {
     FileSystem.writeBinary(s"$resourcesDir/${resource.instance}/${resource.id}/resource.bin", resource.toByteArray)
   }
 
-  override def unhandled(message: Any): Unit = log.warning(s"unhandled message: $message")
+  override def unhandled(message: Any): Unit = message match {
+    case _: SubscribeAck =>
+    case _               => log.warning(s"unhandled message: $message")
+  }
 }
