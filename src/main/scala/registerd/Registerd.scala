@@ -7,7 +7,7 @@ import akka.cluster.http.management.ClusterHttpManagement
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{ Subscribe, SubscribeAck }
 import com.typesafe.config.{ Config, ConfigFactory }
-import registerd.entity.Resource
+import registerd.entity._
 
 import scala.collection.JavaConverters._
 import scala.concurrent.Future
@@ -58,8 +58,8 @@ class Registerd(cluster: Cluster) extends Actor with ActorLogging {
 
   private def getResource(instance: String, id: String): Future[Option[Resource]] = {
     Future {
-      val checksum = FileSystem.readString(s"$resourcesDir/$instance/$id/checksum.txt")
-      val resource = Resource.parseFrom(FileSystem.readBinary(s"$resourcesDir/$instance/$id/resource.bin"))
+      val checksum = FileSystem.readString(checksumFile(instance, id))
+      val resource = Resource.parseFrom(FileSystem.readBinary(resourceFile(instance, id)))
       val resourceDigest = resource.digest
       if (checksum == resourceDigest) {
         Some(resource)
@@ -71,9 +71,15 @@ class Registerd(cluster: Cluster) extends Actor with ActorLogging {
   }
 
   private def saveResource(resource: Resource): Unit = {
-    FileSystem.writeString(s"$resourcesDir/${resource.instance}/${resource.id}/checksum.txt", resource.digest)
-    FileSystem.writeBinary(s"$resourcesDir/${resource.instance}/${resource.id}/resource.bin", resource.toByteArray)
+    import resource._
+    FileSystem.writeString(checksumFile(instance.asString, id.asString), resource.digest)
+    FileSystem.writeBinary(resourceFile(instance.asString, id.asString), resource.toByteArray)
   }
+
+  private def checksumFile(instance: String, id: String): String =
+    s"$resourcesDir/$instance/$id/checksum.txt"
+  private def resourceFile(instance: String, id: String): String =
+    s"$resourcesDir/$instance/$id/resource.bin"
 
   override def unhandled(message: Any): Unit = message match {
     case _: SubscribeAck =>
