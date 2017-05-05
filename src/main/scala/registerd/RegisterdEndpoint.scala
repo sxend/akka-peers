@@ -1,10 +1,7 @@
 package registerd
 
 import akka.pattern._
-import akka.actor.ActorRef
-import akka.cluster.Cluster
-import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.Publish
+import akka.actor.{ ActorRef, ActorSystem }
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
@@ -19,10 +16,8 @@ import registerd.entity.JsonProtocol._
 import scala.util.{ Failure, Success, Try }
 import scala.concurrent.duration._
 
-case class RegisterdEndpoint(registerdRef: ActorRef, cluster: Cluster) {
+case class RegisterdEndpoint(registerdRef: ActorRef)(implicit val system: ActorSystem) {
   implicit val valueFormat = jsonFormat2(Protocol.Value.apply)
-  private implicit val system = cluster.system
-  private val mediator = DistributedPubSub(system).mediator
   private val config = system.settings.config
   private val hostname = config.getString("registerd.hostname")
   import system.dispatcher
@@ -33,20 +28,20 @@ case class RegisterdEndpoint(registerdRef: ActorRef, cluster: Cluster) {
     pathPrefix("resources") {
       put {
         Directives.entity(as[Protocol.Value]) { request =>
-          mediator ! Publish("resource", Resource(
+          registerdRef ! Resource(
             instance = config.getString("registerd.hostname").asByteString,
             id = request.id.asByteString,
             payload = ByteString.copyFrom(request.payload.getBytes)
-          ))
+          )
           complete(StatusCodes.Accepted)
         }
       } ~
         get {
           path(Segment) { id =>
-            onComplete(mediator.ask(Publish("resource", (hostname, id))).mapTo[Option[Resource]])(resourceOptRoute)
+            onComplete(registerdRef.ask((hostname, id)).mapTo[Option[Resource]])(resourceOptRoute)
           } ~
             path(Segment / Segment) { (instance, id) =>
-              onComplete(mediator.ask(Publish("resource", (instance, id))).mapTo[Option[Resource]])(resourceOptRoute)
+              onComplete(registerdRef.ask((instance, id)).mapTo[Option[Resource]])(resourceOptRoute)
             }
         }
     }

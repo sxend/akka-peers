@@ -4,8 +4,6 @@ import akka.actor.{ Actor, ActorLogging, ActorSystem, Props }
 import akka.pattern._
 import akka.cluster.Cluster
 import akka.cluster.http.management.ClusterHttpManagement
-import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.{ Subscribe, SubscribeAck }
 import com.typesafe.config.{ Config, ConfigFactory }
 import registerd.entity._
 
@@ -20,34 +18,22 @@ object Registerd {
   private val roles: List[String] = config.getStringList("akka.cluster.roles").asScala.toList
 
   def main(args: Array[String]): Unit = {
-    val cluster = Cluster(ActorSystem("registerd", config))
-
-    onRole("seed") {
-      ClusterHttpManagement(cluster)
-    }
-    onRole("registerd") {
-      RegisterdEndpoint(registerdRef(cluster), cluster)
-    }
+    implicit val system = ActorSystem("registerd", config)
+    RegisterdEndpoint(registerdRef(system))
   }
-  private def onRole(role: String)(fn: => Unit) = if (hasRole(role)) fn
 
-  private def hasRole(role: String): Boolean = roles.contains(role)
-
-  private def registerdRef(cluster: Cluster) =
-    cluster.system.actorOf(Props(classOf[Registerd], cluster), hostname)
+  private def registerdRef(system: ActorSystem) =
+    system.actorOf(Props(classOf[Registerd]), hostname)
 }
 
-class Registerd(cluster: Cluster) extends Actor with ActorLogging {
+class Registerd extends Actor with ActorLogging {
 
   import context.dispatcher
   private implicit val system = context.system
-  private val mediator = DistributedPubSub(system).mediator
   private val settings = system.settings
   private val config = settings.config
   private val hostname = config.getString("registerd.hostname")
   private val resourcesDir = config.getString("registerd.resources-dir")
-
-  mediator ! Subscribe("resource", self)
 
   def receive = {
     case (instance: String, id: String) =>
@@ -83,7 +69,6 @@ class Registerd(cluster: Cluster) extends Actor with ActorLogging {
     s"$resourcesDir/$instance/$id/resource.bin"
 
   override def unhandled(message: Any): Unit = message match {
-    case _: SubscribeAck =>
-    case _               => log.warning(s"unhandled message: $message")
+    case _ => log.warning(s"unhandled message: $message")
   }
 }
