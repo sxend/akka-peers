@@ -60,11 +60,11 @@ class Registerd(cluster: Cluster) extends Actor with ActorLogging {
     Future {
       val checksum = FileSystem.readString(checksumFile(instance, id))
       val resource = Resource.parseFrom(FileSystem.readBinary(resourceFile(instance, id)))
-      val resourceDigest = resource.digest
-      if (checksum == resourceDigest) {
+      val hash = resource.hash
+      if (checksum == hash) {
         Some(resource)
       } else {
-        log.warning(s"$resourcesDir/$instance/$id checksum mismatch: $checksum != $resourceDigest")
+        log.warning(s"$resourcesDir/$instance/$id checksum mismatch: $checksum != $hash")
         None
       }
     }
@@ -73,7 +73,7 @@ class Registerd(cluster: Cluster) extends Actor with ActorLogging {
   private def saveResource(resource: Resource): Unit = {
     val instance = resource.instance.asString
     val id = resource.id.asString
-    FileSystem.writeString(checksumFile(instance, id), resource.digest)
+    FileSystem.writeString(checksumFile(instance, id), resource.hash)
     FileSystem.writeBinary(resourceFile(instance, id), resource.toByteArray)
   }
 
