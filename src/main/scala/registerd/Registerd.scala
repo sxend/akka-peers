@@ -71,9 +71,10 @@ class Registerd(cluster: Cluster) extends Actor with ActorLogging {
   }
 
   private def saveResource(resource: Resource): Unit = {
-    import resource._
-    FileSystem.writeString(checksumFile(instance.asString, id.asString), resource.digest)
-    FileSystem.writeBinary(resourceFile(instance.asString, id.asString), resource.toByteArray)
+    val instance = resource.instance.asString
+    val id = resource.id.asString
+    FileSystem.writeString(checksumFile(instance, id), resource.digest)
+    FileSystem.writeBinary(resourceFile(instance, id), resource.toByteArray)
   }
 
   private def checksumFile(instance: String, id: String): String =
