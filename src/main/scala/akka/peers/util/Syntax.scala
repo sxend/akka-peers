@@ -1,6 +1,6 @@
-package registerd.util
+package akka.peers.util
 
-trait Syntax {
+private[peers] trait Syntax {
   implicit class Tapper[A](self: A) {
     def tap(fn: A => Unit): A = {
       fn(self)
@@ -9,4 +9,4 @@ trait Syntax {
   }
 }
 
-object Syntax extends Syntax
+private[peers] object Syntax extends Syntax

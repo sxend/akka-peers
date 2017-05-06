@@ -13,10 +13,10 @@ object Main {
 class Example extends Actor with ActorLogging {
   import scala.concurrent.duration._
   private val peers = Peers(context.system)
-  private val mediator = peers.coordinator
-  mediator ! PeersCoordinator.Subscribe("heartbeat", self)
+  private val coordinator = peers.coordinator
+  coordinator ! PeersCoordinator.Subscribe("heartbeat", self)
   context.system.scheduler.schedule(1.seconds, 30.seconds) {
-    mediator ! PeersCoordinator.Publish("heartbeat", s"hello. I am ${self.path}")
+    coordinator ! PeersCoordinator.Publish("heartbeat", s"hello. I am ${self.path}")
   }
   def receive: Receive = {
     case message => log.info(s"receive message: $message")

@@ -1,7 +1,7 @@
 
 organization := "arimitsu.sf"
 
-name := "registerd"
+name := "akka-peers"
 
 version := "0.0.1-SNAPSHOT"
 
@@ -24,11 +24,6 @@ libraryDependencies ++= {
   Seq(
     "org.apache.commons" % "commons-crypto" % "1.0.0",
     "commons-codec" % "commons-codec" % "1.10",
-    "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion,
-    "org.apache.logging.log4j" % "log4j-core" % log4jVersion,
-    "org.apache.logging.log4j" % "log4j-api" % log4jVersion,
-    "com.github.romix.akka" %% "akka-kryo-serialization" % "0.5.2",
-    "com.lightbend.akka" %% "akka-management-cluster-http" % "0.2",
     "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
     "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
@@ -49,6 +44,9 @@ libraryDependencies ++= {
     "com.typesafe.akka" %% "akka-distributed-data" % akkaVersion,
     "com.typesafe.akka" %% "akka-persistence-query" % akkaVersion,
     "com.typesafe.akka" %% "akka-typed" % akkaVersion,
+    "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion % "test",
+    "org.apache.logging.log4j" % "log4j-core" % log4jVersion % "test",
+    "org.apache.logging.log4j" % "log4j-api" % log4jVersion % "test",
     "com.typesafe.akka" %% "akka-stream-testkit" % akkaVersion % "test",
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
     "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion % "test",
@@ -76,20 +74,4 @@ scalacOptions ++= Seq(
   "-language:postfixOps"
 )
 
-assemblyMergeStrategy in assembly := {
-  case PathList(ps @ _*) if ps.last endsWith "bnd.bnd" => MergeStrategy.first
-  case x => (assemblyMergeStrategy in assembly).value(x)
-}
-
-PB.targets in Compile := Seq(
-  scalapb.gen() -> (sourceManaged in Compile).value / "protobuf"
-)
-
-libraryDependencies += "com.trueaccord.scalapb" %% "scalapb-runtime" % com.trueaccord.scalapb.compiler.Version.scalapbVersion % "protobuf"
-
 testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "html", "console")
-
-assemblyJarName in assembly := s"artery-benchmark.jar"
-
-mainClass in assembly := Some("arimitsu.sf.artery.benchmark.Bootstrap")
-

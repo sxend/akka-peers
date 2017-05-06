@@ -1,4 +1,4 @@
-registerd
+akka-peers
 ==============
 
 
