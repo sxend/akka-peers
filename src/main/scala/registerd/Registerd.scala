@@ -1,10 +1,11 @@
 package registerd
 
-import akka.actor.{ Actor, ActorLogging, ActorSystem, Props }
+import akka.actor.{Actor, ActorLogging, ActorSystem, Props}
 import akka.pattern._
 import akka.cluster.Cluster
 import akka.cluster.http.management.ClusterHttpManagement
-import com.typesafe.config.{ Config, ConfigFactory }
+import akka.cluster.pubsub.{DistributedPubSub, DistributedPubSubMediator}
+import com.typesafe.config.{Config, ConfigFactory}
 import registerd.entity._
 
 import scala.collection.JavaConverters._
@@ -18,8 +19,9 @@ object Registerd {
   private val roles: List[String] = config.getStringList("akka.cluster.roles").asScala.toList
 
   def main(args: Array[String]): Unit = {
-    implicit val system = ActorSystem("registerd", config)
-    RegisterdEndpoint(registerdRef(system))
+    implicit val system = ActorSystem("example", config)
+    val mediator = Peers(system).mediator
+    mediator ! PeersMediator.Join(ref)
   }
 
   private def registerdRef(system: ActorSystem) =

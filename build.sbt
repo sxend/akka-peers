@@ -17,10 +17,10 @@ resolvers ++= Seq(
 )
 
 libraryDependencies ++= {
-  val akkaVersion = "2.5.0"
+  val akkaVersion = "2.5.1"
   val spec2Version = "3.8.9"
   val log4jVersion = "2.7"
-  val akkaHttpVersion = "10.0.5"
+  val akkaHttpVersion = "10.0.6"
   Seq(
     "org.apache.commons" % "commons-crypto" % "1.0.0",
     "commons-codec" % "commons-codec" % "1.10",
