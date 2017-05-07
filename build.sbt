@@ -20,30 +20,10 @@ libraryDependencies ++= {
   val akkaVersion = "2.5.1"
   val spec2Version = "3.8.9"
   val log4jVersion = "2.7"
-  val akkaHttpVersion = "10.0.6"
   Seq(
-    "org.apache.commons" % "commons-crypto" % "1.0.0",
-    "commons-codec" % "commons-codec" % "1.10",
-    "com.typesafe.akka" %% "akka-http-core" % akkaHttpVersion,
-    "com.typesafe.akka" %% "akka-http" % akkaHttpVersion,
-    "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
-    "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-    "com.typesafe.akka" %% "akka-agent" % akkaVersion,
-    "com.typesafe.akka" %% "akka-camel" % akkaVersion,
-    "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
-    "com.typesafe.akka" %% "akka-cluster-metrics" % akkaVersion,
-    "com.typesafe.akka" %% "akka-cluster-sharding" % akkaVersion,
-    "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,
-    "com.typesafe.akka" %% "akka-contrib" % akkaVersion,
-    "com.typesafe.akka" %% "akka-osgi" % akkaVersion,
-    "com.typesafe.akka" %% "akka-persistence" % akkaVersion,
-    "com.typesafe.akka" %% "akka-persistence-tck" % akkaVersion,
     "com.typesafe.akka" %% "akka-remote" % akkaVersion,
-    "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
     "com.typesafe.akka" %% "akka-stream" % akkaVersion,
-    "com.typesafe.akka" %% "akka-distributed-data" % akkaVersion,
-    "com.typesafe.akka" %% "akka-persistence-query" % akkaVersion,
-    "com.typesafe.akka" %% "akka-typed" % akkaVersion,
+    "com.typesafe.akka" %% "akka-slf4j" % akkaVersion % "test",
     "org.apache.logging.log4j" % "log4j-slf4j-impl" % log4jVersion % "test",
     "org.apache.logging.log4j" % "log4j-core" % log4jVersion % "test",
     "org.apache.logging.log4j" % "log4j-api" % log4jVersion % "test",

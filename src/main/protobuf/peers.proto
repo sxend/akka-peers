@@ -8,13 +8,22 @@ option (scalapb.options) = {
 };
 
 message Handshake {
-    string path = 1;
+    string address = 1;
 }
 
 message HandshakeAck {
-    string path = 1;
+    string address = 1;
 }
 
 message Heartbeat {
-    string path = 1;
+    string address = 1;
+}
+
+message PeerResolveQuery {
+    string address = 1;
+    int32 limit = 2;
+}
+
+message PeerResolveResult {
+    repeated string addresses = 1;
 }

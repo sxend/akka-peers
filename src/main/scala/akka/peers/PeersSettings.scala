@@ -19,5 +19,6 @@ class PeersSettings(val config: Config, val systemName: String) {
   val exploringThreshold: Int = cc.getInt("exploring-threshold")
   val seedPeers: List[String] = cc.getStringList("seed-peers").asScala.toList
   val seedResolvers: List[String] = cc.getStringList("seed-resolvers").asScala.toList
-  require(seedPeers.nonEmpty || seedResolvers.nonEmpty)
+  require(seedPeers.nonEmpty || seedResolvers.nonEmpty, "seed-peers is nonEmpty or seed-resolvers is nonEmpty")
+  val resolveResultLimit: Int = cc.getInt("resolve-result-limit")
 }
