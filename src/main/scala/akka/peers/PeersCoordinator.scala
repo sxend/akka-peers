@@ -1,13 +1,13 @@
 package akka.peers
 
 import akka.pattern._
-import akka.actor.{ Actor, ActorLogging, ActorRef, Address, AddressFromURIString, Props }
+import akka.actor.{ Actor, ActorLogging, ActorSelection, Address, AddressFromURIString, Props }
 import akka.peers.protobuf._
-import akka.remote.RemoteActorRefProvider
-import akka.remote.transport.TransportAdaptersExtension
+import akka.peers.util.Syntax._
 import akka.util.Timeout
 
 import scala.util.{ Failure, Success }
+import scala.util.Random.shuffle
 import scala.concurrent.duration._
 
 object PeersCoordinator {
@@ -23,38 +23,37 @@ class PeersCoordinator(settings: PeersSettings) extends Actor with ActorLogging 
   private val peers = Peers(context.system)
   def receive: Receive = {
     case handshake: Handshake =>
-      log.info(s"incomming handshake: $handshake")
-      sender() ! HandshakeAck(selfAddress)
-      if (!peers.neighbors.contains(AddressFromURIString(handshake.address))) {
-        sender() ! Handshake(selfAddress)
+      val address = handshake.address.parsedAddress
+      log.debug(s"incoming handshake: $handshake")
+      sender() ! HandshakeAck(selfAddress.toString)
+      if (!peers.neighbors.contains(address)) {
+        sender() ! Handshake(selfAddress.toString)
       }
     case handshakeAck: HandshakeAck =>
-      log.info(s"incomming handshakeAck: $handshakeAck")
-      peers.addNeighbors(AddressFromURIString(handshakeAck.address))
-    case heartbeat: Heartbeat if peers.neighbors.contains(AddressFromURIString(heartbeat.address)) =>
-      log.info(s"incomming heartbeat: $heartbeat")
-      sender() ! Heartbeat(selfAddress)
+      log.debug(s"incoming handshakeAck: $handshakeAck")
+      peers.addNeighbors(handshakeAck.address.parsedAddress)
+    case heartbeat: Heartbeat if peers.neighbors.contains(heartbeat.address.parsedAddress) =>
+      log.debug(s"incoming heartbeat: $heartbeat")
+      sender() ! HeartbeatAck(selfAddress.toString)
     case query: PeerResolveQuery =>
-      log.info(s"incomming query: $query")
+      log.debug(s"incoming query: $query")
       val limit = Option(query.limit).filter(_ > 0).getOrElse(settings.resolveResultLimit)
-      val result = {
-        val list = peers.neighbors.filterNot(_.toString == query.address)
-          .take(math.min(limit, settings.resolveResultLimit))
-          .map(address => address.toString).toList
-        PeerResolveResult(list)
-      }
+      val result = shuffle(peers.neighbors.filterNot(_ == query.address.parsedAddress))
+        .take(math.min(limit, settings.resolveResultLimit))
+        .map(_.toString).toList
+        .wrap(PeerResolveResult.apply)
       sender() ! result
     case result: PeerResolveResult =>
-      log.info(s"incomming result: $result")
+      log.debug(s"incoming result: $result")
       result.addresses.foreach { address =>
-        context.system.actorSelection(s"$address/system/${settings.name}") ! Handshake(selfAddress)
+        address.parsedAddress.coordinatorRef ! Handshake(selfAddress.toString)
       }
     case Protocol.RemoveNeighbor(address) =>
-      log.info(s"incomming RemoveNeighbor: $address")
+      log.debug(s"incoming RemoveNeighbor: $address")
       peers.removeNeighbors(address)
   }
 
-  private val selfAddress = peers.address.toString
+  private val selfAddress: Address = peers.address
 
   private def heartbeat(): Unit = {
     implicit val timeout: Timeout = settings.heartbeatTimeout
@@ -62,11 +61,10 @@ class PeersCoordinator(settings: PeersSettings) extends Actor with ActorLogging 
       startup()
     } else {
       peers.neighbors.foreach { address =>
-        val selection = s"$address/system/${settings.name}"
-        context.system.actorSelection(selection).ask(Heartbeat(selfAddress)).mapTo[Heartbeat].onComplete {
-          case Success(s) => log.debug(s"heartbeat succeed: {}.", address)
+        address.coordinatorRef.ask(Heartbeat(selfAddress.toString)).mapTo[HeartbeatAck].onComplete {
+          case Success(ack) => log.debug(s"heartbeat succeed: $address. ack from: ${ack.address}")
           case Failure(t) =>
-            log.warning(s"heartbeat failed: {}. {} {}", address, t.getMessage, t.getStackTrace)
+            log.error(t, s"heartbeat failed: ${t.getMessage}")
             self ! Protocol.RemoveNeighbor(address)
         }
       }
@@ -74,16 +72,21 @@ class PeersCoordinator(settings: PeersSettings) extends Actor with ActorLogging 
   }
   context.system.scheduler.schedule(0.seconds, settings.heartbeatInterval)(heartbeat())
   private def startup(): Unit = {
-    log.info(s"selfaddress: $selfAddress")
     settings.seedPeers.filterNot(_ == selfAddress).foreach { address =>
-      val selection = s"$address/system/${settings.name}"
-      log.info(s"select address: $selection")
-      context.system.actorSelection(selection) ! Handshake(selfAddress)
+      address.coordinatorRef ! Handshake(selfAddress.toString)
     }
     settings.seedResolvers.filterNot(_ == selfAddress).foreach { address =>
-      val selection = s"$address/system/${settings.name}"
-      log.info(s"select address: $selection")
-      context.system.actorSelection(selection) ! PeerResolveQuery(selfAddress, settings.resolveResultLimit)
+      address.coordinatorRef !
+        PeerResolveQuery(selfAddress.toString, settings.resolveResultLimit)
     }
+  }
+
+  private implicit class ToCoordinatorPath(address: Address) {
+    def coordinatorPath: String = s"${address.toString}/system/${settings.name}"
+    def coordinatorRef: ActorSelection =
+      context.system.actorSelection(address.coordinatorPath)
+  }
+  private implicit class ParseAddress(addressStr: String) {
+    def parsedAddress: Address = AddressFromURIString(addressStr)
   }
 }

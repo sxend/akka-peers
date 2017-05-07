@@ -18,6 +18,9 @@ message HandshakeAck {
 message Heartbeat {
     string address = 1;
 }
+message HeartbeatAck {
+    string address = 1;
+}
 
 message PeerResolveQuery {
     string address = 1;

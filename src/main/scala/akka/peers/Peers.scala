@@ -10,7 +10,7 @@ object Peers extends ExtensionId[Peers] with ExtensionIdProvider {
   override def createExtension(system: ExtendedActorSystem): Peers = new Peers(system)
 }
 class Peers(val system: ExtendedActorSystem) extends Extension {
-  private[peers] val address = system.provider match {
+  val address = system.provider match {
     case rarp: RemoteActorRefProvider => rarp.transport.defaultAddress
     case _                            => system.provider.rootPath.address
   }
@@ -18,8 +18,11 @@ class Peers(val system: ExtendedActorSystem) extends Extension {
   private[peers] var _neighbors: Set[Address] = Set.empty
   private[peers] def addNeighbors(address: Address): Unit =
     this._neighbors = this._neighbors + address
-  private[peers] def removeNeighbors(address: Address): Unit =
+  private[peers] def removeNeighbors(address: Address): Unit = {
+    system.log.info(s"this._neighbors: ${this._neighbors}, address: $address, this._neighbors.filterNot(_ == address): ${this._neighbors.filterNot(_ == address)}")
     this._neighbors = this._neighbors.filterNot(_ == address)
+    system.log.info(s"this._neighbors: ${this._neighbors}")
+  }
 
   def neighbors: Set[Address] = _neighbors
 
