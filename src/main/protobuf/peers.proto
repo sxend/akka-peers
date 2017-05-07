@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+import "scalapb/scalapb.proto";
+
+option (scalapb.options) = {
+    package_name: "akka.peers.protobuf"
+    flat_package: true
+};
+
+message Handshake {
+    string path = 1;
+}
+
+message HandshakeAck {
+    string path = 1;
+}
+
+message Heartbeat {
+    string path = 1;
+}

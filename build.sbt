@@ -75,3 +75,9 @@ scalacOptions ++= Seq(
 )
 
 testOptions in Test += Tests.Argument(TestFrameworks.Specs2, "junitxml", "html", "console")
+
+PB.targets in Compile := Seq(
+  scalapb.gen() -> (sourceManaged in Compile).value / "protobuf"
+)
+
+libraryDependencies += "com.trueaccord.scalapb" %% "scalapb-runtime" % com.trueaccord.scalapb.compiler.Version.scalapbVersion % "protobuf"
